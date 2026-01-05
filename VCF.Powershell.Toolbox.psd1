@@ -96,7 +96,7 @@
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
     FunctionsToExport = @(
-        # Utility.Functions :
+        # Utility.Functions - Core Utilities
         'ConvertFrom-JsonSafely',             # Safe JSON file parsing with error handling
         'Exit-WithCode',                      # Standardized script exit with exit codes
         'Get-EnvironmentSetup',               # Environment information gathering for troubleshooting
@@ -112,6 +112,25 @@
         'Test-LogLevel',                      # Log level threshold testing
         'Write-ErrorAndReturn',               # Standardized error result generation
         'Write-LogMessage',                   # Core logging functionality with color-coded output
+        # Utility.Functions - JSON Validation
+        'Get-JsonDataWithValidation',         # Common helper for JSON file validation
+        'Get-JsonPropertyValue',              # Extract property values using dot-notation paths
+        'Test-JsonFile',                      # Enhanced JSON file validation with resource management
+        'Test-JsonMissingProperties',         # Validate required properties exist in JSON objects
+        'Test-JsonNullValues',                # Validate JSON properties are not null
+        # Utility.Functions - String and Error Handling
+        'Get-CleanErrorMessage',              # Extract clean error messages from JSON responses
+        'ConvertFrom-SecureString',           # Secure string to plain text conversion
+        # Utility.Functions - File and Path Utilities
+        'Test-CommandAvailability',           # Check if command is available in PATH
+        'Test-DiskSpace',                     # Check available disk space for file operations
+        'Test-FileLocked',                    # Test if file is locked by another process
+        'Test-Filepath',                      # Enhanced file existence validation
+        # Utility.Functions - Network Utilities
+        'Test-IpAddressInCidrRange',          # Validate IP address within CIDR range
+        'Test-ValidCidrRange',                # Validate CIDR range (power of 2)
+        # Utility.Functions - Exception Handling
+        'Write-ExceptionDetails',             # Detailed exception logging with inner exception traversal
         # Connection.Functions - SDDC Manager
         'Connect-SddcManager',                # SDDC Manager authentication and connection
         'Disconnect-SddcManager',             # SDDC Manager disconnection
