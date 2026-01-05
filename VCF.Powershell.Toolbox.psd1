@@ -30,7 +30,7 @@
 #
 # =============================================================================
 #
-# Generated on: 2025-11-20
+# Generated on: 2026-01-05
 #
 @{
 
@@ -38,7 +38,7 @@
     #RootModule = ''
 
     # Version number of this module.
-    ModuleVersion = '1.0.0.2'
+    ModuleVersion = '1.0.0.3'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
