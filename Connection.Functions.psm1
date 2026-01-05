@@ -75,7 +75,7 @@ Function Connect-SddcManager {
 
         Administrative privileges are required on the SDDC Manager for successful authentication.
 
-        .PARAMETER sddcManagerCredentialsJson
+        .PARAMETER SddcManagerCredentialsJson
         Path to the JSON file containing SDDC Manager credentials. The file should contain:
         - sddcManagerFqdn: Fully qualified domain name of the SDDC Manager
         - sddcManagerUserName: SSO or federated username
@@ -88,7 +88,7 @@ Function Connect-SddcManager {
         credentials are stored securely in the file and handled as PSCredential/SecureString
         during processing.
 
-        .PARAMETER reconnect
+        .PARAMETER Reconnect
         Forces reconnection using previously cached credentials (stored in script-scoped variables).
         This is useful when tokens have expired or connections have been lost. Bypasses credential
         prompting and file operations when cached credentials are available.
@@ -100,12 +100,12 @@ Function Connect-SddcManager {
         Offers to save credentials to JSON file after successful connection.
 
         .EXAMPLE
-        Connect-SddcManager -sddcManagerCredentialsJson "ProductionCredentials.json"
+        Connect-SddcManager -SddcManagerCredentialsJson "ProductionCredentials.json"
 
         Connects using credentials from a custom JSON file path.
 
         .EXAMPLE
-        Connect-SddcManager -reconnect
+        Connect-SddcManager -Reconnect
 
         Reconnects using cached credentials from a previous session, useful for token refresh.
 
@@ -119,8 +119,8 @@ Function Connect-SddcManager {
     #>
 
     Param(
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$reconnect,
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [String]$sddcManagerCredentialsJson = "SddcManagerCredentials.Json"
+        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$Reconnect,
+        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [String]$SddcManagerCredentialsJson = "SddcManagerCredentials.Json"
     )
 
     # This ensures all actions are properly logged.
@@ -128,7 +128,7 @@ Function Connect-SddcManager {
 
     # Handle reconnection scenario using cached credentials
     # This is typically used when tokens have expired but credentials are still valid
-    if ($reconnect) {
+    if ($Reconnect) {
         # Verify that all required cached credentials are available
         if ($Script:sddcManagerFqdn -and $Script:sddcManagerUserName -and $Script:sddcManagerPassword) {
             # Attempt reconnection using cached credentials with error suppression
@@ -143,13 +143,13 @@ Function Connect-SddcManager {
 
     # Begin main authentication workflow.
     # Check if credentials JSON file exists for automated authentication.
-    $sddcManagerCredentialsJsonFileExists = Test-Path $sddcManagerCredentialsJson
+    $sddcManagerCredentialsJsonFileExists = Test-Path $SddcManagerCredentialsJson
 
     if ($sddcManagerCredentialsJsonFileExists) {
-        Write-LogMessage -type INFO -prependNewLine -appendNewLine -message "Detected JSON input file `"$sddcManagerCredentialsJson`"."
+        Write-LogMessage -type INFO -prependNewLine -appendNewLine -message "Detected JSON input file `"$SddcManagerCredentialsJson`"."
 
         # Convert the JSON file to a PowerShell object.
-        $sddcManagerCredentialsObject = ConvertFrom-JsonSafely -jsonFilePath $sddcManagerCredentialsJson
+        $sddcManagerCredentialsObject = ConvertFrom-JsonSafely -JsonFilePath $SddcManagerCredentialsJson
 
         # Assign the properties to the script variables.
         $Script:sddcManagerFqdn = $sddcManagerCredentialsObject.sddcManagerFqdn
@@ -160,7 +160,7 @@ Function Connect-SddcManager {
         # This prevents runtime errors and provides clear feedback about missing fields.
         # $JsonProperties = @('sddcManagerFqdn', 'sddcManagerUserName', 'sddcManagerPassword')
 
-        $results = Test-ArrayMissingProperties -array $sddcManagerCredentialsObject -requiredProperties @('sddcManagerFqdn', 'sddcManagerUserName', 'sddcManagerPassword') -arrayName "$sddcManagerCredentialsJson"
+        $results = Test-ArrayMissingProperties -Array $sddcManagerCredentialsObject -RequiredProperties @('sddcManagerFqdn', 'sddcManagerUserName', 'sddcManagerPassword') -ArrayName "$SddcManagerCredentialsJson"
 
         # If the JSON file is invalid, exit the function.
         if (-not $results.IsValid) {
@@ -168,9 +168,9 @@ Function Connect-SddcManager {
         }
 
         # Validate that all required properties are not empty.
-        Test-EmptyValue -value $Script:sddcManagerFqdn -fieldName "sddcManagerFqdn"
-        Test-EmptyValue -value $Script:sddcManagerUserName -fieldName "sddcManagerUserName"
-        Test-EmptyValue -value $Script:sddcManagerPassword -fieldName "sddcManagerPassword"
+        Test-EmptyValue -Value $Script:sddcManagerFqdn -FieldName "sddcManagerFqdn"
+        Test-EmptyValue -Value $Script:sddcManagerUserName -FieldName "sddcManagerUserName"
+        Test-EmptyValue -Value $Script:sddcManagerPassword -FieldName "sddcManagerPassword"
 
     } else {
         # Handle case where JSON credentials file doesn't exist
@@ -183,17 +183,17 @@ Function Connect-SddcManager {
         }
 
         # Inform user that credentials file was not found and interactive input is required
-        Write-LogMessage -type WARNING -appendNewLine -message "JSON SDDC Credentials input file `"$sddcManagerCredentialsJson`" not detected."
-        Write-LogMessage -type WARNING -suppressOutputToScreen -message "Could not locate JSON credentials file `"$sddcManagerCredentialsJson`" ."
+        Write-LogMessage -type WARNING -appendNewLine -message "JSON SDDC Credentials input file `"$SddcManagerCredentialsJson`" not detected."
+        Write-LogMessage -type WARNING -suppressOutputToScreen -message "Could not locate JSON credentials file `"$SddcManagerCredentialsJson`" ."
         Write-LogMessage -type INFO -appendNewLine -message "Please enter your connection details at the prompt."
 
         # Interactive credential collection with validation loops
         # Ensure all required credentials are provided before proceeding
 
         # Collect SDDC Manager FQDN with validation.
-        $Script:sddcManagerFqdn =  Get-InteractiveInput -promptMessage "Enter your SDDC Manager FQDN"
-        $Script:sddcManagerUserName = Get-InteractiveInput -promptMessage "Enter your SDDC Manager SSO username"
-        $Script:sddcManagerPassword =  Get-InteractiveInput -promptMessage "Enter your SDDC Manager SSO password" -asSecureString
+        $Script:sddcManagerFqdn =  Get-InteractiveInput -PromptMessage "Enter your SDDC Manager FQDN"
+        $Script:sddcManagerUserName = Get-InteractiveInput -PromptMessage "Enter your SDDC Manager SSO username"
+        $Script:sddcManagerPassword =  Get-InteractiveInput -PromptMessage "Enter your SDDC Manager SSO password" -AsSecureString
     }
 
     # Log connection attempt (to file only for clean console output)
@@ -263,12 +263,12 @@ Function Connect-SddcManager {
     if (-not $connectedToSddcManager) {
         if ($sddcManagerCredentialsJsonFileExists) {
             # If using JSON credentials file, exit with instructions to fix the file
-            Write-LogMessage -type ERROR -prependNewLine -message "Please confirm your SDDC Manager FQDN and user credentials in $sddcManagerCredentialsJson and return to the script."
+            Write-LogMessage -type ERROR -prependNewLine -message "Please confirm your SDDC Manager FQDN and user credentials in $SddcManagerCredentialsJson and return to the script."
             return
         }
 
         # For interactive mode, offer to retry with new credentials
-        $decision = New-ChoiceMenu -question "Would you like to re-enter your SDDC Manager FQDN and user credentials?" -defaultAnswer "Yes"
+        $decision = New-ChoiceMenu -Question "Would you like to re-enter your SDDC Manager FQDN and user credentials?" -DefaultAnswer "Yes"
 
         # Handle user's decision on retry
         if ($decision -eq 0) {
@@ -290,12 +290,12 @@ Function Connect-SddcManager {
             Write-LogMessage -type ADVISORY -appendNewLine -message "Your SDDC Manager login credentials may be saved to a file to allow non-interactive login in the future. This is not required, and the file may be safely removed at any time."
 
             # Prompt user for credential file creation (default to No for security)
-            $decision = New-ChoiceMenu -question "Would you like to save your SDDC login credentials in a JSON file?" -defaultAnswer "No"
+            $decision = New-ChoiceMenu -Question "Would you like to save your SDDC login credentials in a JSON file?" -DefaultAnswer "No"
 
             if ($decision -eq 0) {
                 # User chose to save credentials
                 Write-LogMessage -type DEBUG -message "User chose to save SDDC Manager credentials to JSON file."
-                Write-LogMessage -type INFO -appendNewLine -message "Writing credentials to `"$sddcManagerCredentialsJson`"..."
+                Write-LogMessage -type INFO -appendNewLine -message "Writing credentials to `"$SddcManagerCredentialsJson`"..."
 
                 # Securely decode the password from SecureString for JSON storage
                 # This is necessary but should be handled carefully for security
@@ -313,7 +313,7 @@ Function Connect-SddcManager {
 
                 # Convert to JSON and save to file
                 $jsonOutput = $jsonHashTable | ConvertTo-Json
-                Set-Content -Path $sddcManagerCredentialsJson $jsonOutput
+                Set-Content -Path $SddcManagerCredentialsJson $jsonOutput
             } else {
                 # User chose not to save credentials
                 Write-LogMessage -type DEBUG -message "User chose not to save SDDC Manager credentials to JSON file."
@@ -345,18 +345,18 @@ Function Disconnect-SddcManager {
         The function validates connection state before attempting disconnection and
         provides appropriate feedback based on the operation mode.
 
-        .PARAMETER overrideQuestion
-        Custom confirmation message to display instead of the default disconnect prompt.
-        This allows context-specific prompts (e.g., "Switch to different SDDC Manager?").
-        Only used when NoPrompt is not specified.
-
-        .PARAMETER noPrompt
+        .PARAMETER NoPrompt
         Bypasses user confirmation and disconnects immediately. Useful for:
         - Automated cleanup operations.
         - Error handling scenarios.
         - Script termination sequences.
 
-        .PARAMETER silence
+        .PARAMETER OverrideQuestion
+        Custom confirmation message to display instead of the default disconnect prompt.
+        This allows context-specific prompts (e.g., "Switch to different SDDC Manager?").
+        Only used when NoPrompt is not specified.
+
+        .PARAMETER Silence
         Suppresses console output while maintaining file logging. The disconnect
         operation and results are still logged to file for audit purposes.
 
@@ -366,17 +366,17 @@ Function Disconnect-SddcManager {
         Standard interactive disconnect with default confirmation prompt.
 
         .EXAMPLE
-        Disconnect-SddcManager -noPrompt
+        Disconnect-SddcManager -NoPrompt
 
         Immediate disconnect without user confirmation, typically used in cleanup.
 
         .EXAMPLE
-        Disconnect-SddcManager -overrideQuestion "Switch to different SDDC Manager?"
+        Disconnect-SddcManager -OverrideQuestion "Switch to different SDDC Manager?"
 
         Custom confirmation message for specific use cases.
 
         .EXAMPLE
-        Disconnect-SddcManager -noPrompt -silence
+        Disconnect-SddcManager -NoPrompt -Silence
 
         Silent disconnect for automated operations with file-only logging.
 
@@ -388,9 +388,9 @@ Function Disconnect-SddcManager {
     #>
 
     Param(
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$noPrompt,
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [String]$overrideQuestion,
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$silence
+        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$NoPrompt,
+        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [String]$OverrideQuestion,
+        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$Silence
     )
 
     # This ensures all actions are properly logged.
@@ -399,7 +399,7 @@ Function Disconnect-SddcManager {
     # Check if there's an active SDDC Manager connection
     if (-not $Global:defaultSddcManagerConnections.IsConnected) {
         # No active connection found
-        if (-not $silence) {
+        if (-not $Silence) {
             Write-LogMessage -type INFO -message "No SDDC Manager connection detected."
         }
     } else {
@@ -408,25 +408,25 @@ Function Disconnect-SddcManager {
         $Global:sddcManagerFqdn = $Global:defaultSddcManagerConnections.name
 
         # Handle user confirmation unless NoPrompt is specified
-        if (-not $noPrompt) {
-            if ($overrideQuestion) {
+        if (-not $NoPrompt) {
+            if ($OverrideQuestion) {
                 # Use custom confirmation message if provided
-                $decision = New-ChoiceMenu -question "$overrideQuestion" -defaultAnswer "No"
+                $decision = New-ChoiceMenu -Question "$OverrideQuestion" -DefaultAnswer "No"
             } else {
                 # Use standard disconnect confirmation
-                $decision = New-ChoiceMenu -question "Would you like to disconnect from `"$Global:sddcManagerFqdn`"?" -defaultAnswer "No"
+                $decision = New-ChoiceMenu -Question "Would you like to disconnect from `"$Global:sddcManagerFqdn`"?" -DefaultAnswer "No"
             }
         }
 
         # Execute disconnection if user confirmed or NoPrompt is specified
-        if (($decision -eq 0) -or ($noPrompt)) {
+        if (($decision -eq 0) -or ($NoPrompt)) {
             # Attempt disconnection using PowerCLI cmdlet
             Disconnect-VcfSddcManagerServer -Server $Global:defaultSddcManagerConnections.name
 
             # Check disconnection result and log appropriately
             if ($?) {
                 # Disconnection successful
-                if ($silence) {
+                if ($Silence) {
                     # Silent mode - log to file only
                     Write-LogMessage -type DEBUG -message "Successfully disconnected from SDDC Manager `"$Global:sddcManagerFqdn`"."
                 } else {
@@ -722,19 +722,19 @@ Function Connect-Vcenter {
         - Graceful handling of existing connections with detailed user information
         - Connection state validation to prevent duplicate connections
 
-        .PARAMETER serverName
-        The fully qualified domain name (FQDN) or IP address of the server to connect to.
-        This can be either a vCenter or an ESX host, depending on the ServerType parameter.
-        This parameter is mandatory and must be a valid, reachable server instance.
-
-        .PARAMETER serverCredential
+        .PARAMETER ServerCredential
         A PSCredential object containing the username and password for authentication to the target server.
         This should contain a valid user account with appropriate permissions for the operations being performed.
         For vCenter: Supports both local vCenter accounts and SSO domain accounts (e.g., administrator@vsphere.local).
         For ESX: Typically uses root account or other local ESX user accounts.
         Using PSCredential objects ensures that passwords are handled securely and not exposed in plain text.
 
-        .PARAMETER serverType
+        .PARAMETER ServerName
+        The fully qualified domain name (FQDN) or IP address of the server to connect to.
+        This can be either a vCenter or an ESX host, depending on the ServerType parameter.
+        This parameter is mandatory and must be a valid, reachable server instance.
+
+        .PARAMETER ServerType
         Specifies the type of server being connected to. Valid values are "vCenter" or "ESX".
         This parameter determines the connection context and affects logging messages and error handling.
         - "vCenter": Connects to a vCenter instance for centralized management
@@ -742,20 +742,20 @@ Function Connect-Vcenter {
 
         .EXAMPLE
         $credential = Get-Credential -message "Enter vCenter credentials"
-        Connect-Vcenter -serverName "vcenter.example.com" -serverCredential $credential -serverType "vCenter"
+        Connect-Vcenter -ServerName "vcenter.example.com" -ServerCredential $credential -ServerType "vCenter"
 
         Connects to a vCenter using credentials obtained from Get-Credential cmdlet.
 
         .EXAMPLE
         $securePassword = Read-Host "Enter ESX password" -asSecureString
         $credential = New-Object System.Management.Automation.PSCredential("root", $securePassword)
-        Connect-Vcenter -serverName "ESX-host.example.com" -serverCredential $credential -serverType "ESX"
+        Connect-Vcenter -ServerName "ESX-host.example.com" -ServerCredential $credential -ServerType "ESX"
 
         Connects to an ESX host using a PSCredential object created from secure input.
 
         .EXAMPLE
-        Connect-Vcenter -serverName $Script:vCenterName -serverCredential $vCenterCredential -serverType "vCenter"
-        Connect-Vcenter -serverName $esxHost -serverCredential $esxCredential -serverType "ESX"
+        Connect-Vcenter -ServerName $Script:vCenterName -ServerCredential $vCenterCredential -ServerType "vCenter"
+        Connect-Vcenter -ServerName $esxHost -ServerCredential $esxCredential -ServerType "ESX"
 
         Example of connecting to both vCenter and ESX host in sequence using variables.
 
@@ -773,37 +773,37 @@ Function Connect-Vcenter {
 
     #>
     Param(
-        [Parameter(Mandatory = $true)] [ValidateNotNullOrEmpty()] [PSCredential]$serverCredential,
-        [Parameter(Mandatory = $true)] [ValidateNotNullOrEmpty()] [String]$serverName,
-        [Parameter(Mandatory = $true)] [ValidateSet("vCenter", "ESX")] [String]$serverType
+        [Parameter(Mandatory = $true)] [ValidateNotNullOrEmpty()] [PSCredential]$ServerCredential,
+        [Parameter(Mandatory = $true)] [ValidateNotNullOrEmpty()] [String]$ServerName,
+        [Parameter(Mandatory = $true)] [ValidateSet("vCenter", "ESX")] [String]$ServerType
     )
 
     Write-LogMessage -type DEBUG -message "Entered Connect-Vcenter function..."
 
     # Check if we're already connected to this vCenter to avoid duplicate connections.
-    $connectedVcenter = $Global:DefaultViServers | Where-Object {$_.name -eq $serverName -and $_.IsConnected -eq "true"}
+    $connectedVcenter = $Global:DefaultViServers | Where-Object {$_.name -eq $ServerName -and $_.IsConnected -eq "true"}
 
     if (-not $connectedVcenter) {
         # Attempt to establish a new connection to the vCenter.  If it fails, exit the script.
         try {
-            Write-LogMessage -type DEBUG -message "Attempting to connect to $serverType Server `"$serverName`"..."
-            Connect-VIServer -Server $serverName -Credential $serverCredential -ErrorAction Stop | Out-Null
+            Write-LogMessage -type DEBUG -message "Attempting to connect to $ServerType Server `"$ServerName`"..."
+            Connect-VIServer -Server $ServerName -Credential $ServerCredential -ErrorAction Stop | Out-Null
         } catch [System.TimeoutException] {
-            Write-LogMessage -type ERROR -message "Cannot connect to $serverType Server `"$serverName`" due to network/timeout issues: $_"
+            Write-LogMessage -type ERROR -message "Cannot connect to $ServerType Server `"$ServerName`" due to network/timeout issues: $_"
             exit 1
         }
         catch {
-            Write-LogMessage -type ERROR -message "Failed to connect to $serverType `"$serverName`" $_."
+            Write-LogMessage -type ERROR -message "Failed to connect to $ServerType `"$ServerName`" $_."
             exit 1
         }
-        Write-LogMessage -type DEBUG -message "Successfully connected to $serverType `"$serverName`"."
+        Write-LogMessage -type DEBUG -message "Successfully connected to $ServerType `"$ServerName`"."
     } else {
         # Connection already exists.  Surface the data on what user the connection is using.
-        $existingUsername = ($Global:DefaultVIServers | Where-Object {$_.Name -eq $serverName }).User
+        $existingUsername = ($Global:DefaultVIServers | Where-Object {$_.Name -eq $ServerName }).User
         if ($existingUsername) {
-            Write-LogMessage -type WARNING -message "Already connected to $serverType `"$serverName`" as `"$existingUsername`"."
+            Write-LogMessage -type WARNING -message "Already connected to $ServerType `"$ServerName`" as `"$existingUsername`"."
         } else {
-            Write-LogMessage -type WARNING -message "Already connected to $serverType `"$serverName`"."
+            Write-LogMessage -type WARNING -message "Already connected to $ServerType `"$ServerName`"."
         }
     }
 }
@@ -825,11 +825,11 @@ Function Test-VcenterConnection {
         This provides minimal overhead while ensuring the connection is truly functional
         before attempting more complex operations that would fail with cryptic errors.
 
-        .PARAMETER serverName
+        .PARAMETER ServerName
         The hostname or IP address of the vCenter to test connectivity to.
         If not specified, uses $Script:vCenterName.
 
-        .PARAMETER skipConnectivityTest
+        .PARAMETER SkipConnectivityTest
         When specified, only checks if a session exists without making an API call.
         This is faster but doesn't verify the connection is still alive (useful if you
         just want to check session existence, not actual connectivity).
@@ -852,7 +852,7 @@ Function Test-VcenterConnection {
 
         .EXAMPLE
         # Fast check without API call
-        $sessionExists = Test-VcenterConnection -skipConnectivityTest
+        $sessionExists = Test-VcenterConnection -SkipConnectivityTest
         if ($sessionExists.IsConnected) {
             Write-LogMessage -type DEBUG -suppressOutputToFile -message "Session exists for `"$($sessionExists.ServerName)`" (age: $($sessionExists.SessionAge))"
         } else {
@@ -861,7 +861,7 @@ Function Test-VcenterConnection {
 
         .EXAMPLE
         # Test specific vCenter
-        $result = Test-VcenterConnection -serverName $Script:vCenterName
+        $result = Test-VcenterConnection -ServerName $Script:vCenterName
         if ($result.IsConnected) {
             Write-LogMessage -type INFO -message "Connection to `"$($result.ServerName)`" is valid"
         }
@@ -883,8 +883,8 @@ Function Test-VcenterConnection {
     #>
 
     Param(
-        [Parameter(Mandatory = $false)] [String]$serverName = $Script:vCenterName,
-        [Parameter(Mandatory = $false)] [Switch]$skipConnectivityTest
+        [Parameter(Mandatory = $false)] [String]$ServerName = $Script:vCenterName,
+        [Parameter(Mandatory = $false)] [Switch]$SkipConnectivityTest
     )
 
     Write-LogMessage -type DEBUG -suppressOutputToFile -message "Entered Test-VcenterConnection function..."
@@ -892,7 +892,7 @@ Function Test-VcenterConnection {
     # Initialize result object.
     $result = [PSCustomObject]@{
         IsConnected = $false
-        ServerName = $serverName
+        ServerName = $ServerName
         SessionAge = $null
         ErrorMessage = $null
     }
@@ -900,11 +900,11 @@ Function Test-VcenterConnection {
     # Phase 1: Check if session exists in PowerCLI session cache.
     try {
         $vcServer = $Global:DefaultViServers | Where-Object {
-            $_.Name -eq $serverName -and $_.IsConnected -eq $true
+            $_.Name -eq $ServerName -and $_.IsConnected -eq $true
         }
 
         if (-not $vcServer) {
-            $result.ErrorMessage = "No active PowerCLI session found for vCenter `"$serverName`""
+            $result.ErrorMessage = "No active PowerCLI session found for vCenter `"$ServerName`""
             Write-LogMessage -type DEBUG -suppressOutputToFile -message $result.ErrorMessage
             return $result
         }
@@ -917,10 +917,10 @@ Function Test-VcenterConnection {
             $result.SessionAge = [TimeSpan]::FromMinutes(0)
         }
 
-        Write-LogMessage -type DEBUG -suppressOutputToFile -message "PowerCLI session exists for `"$serverName`" (age: $($result.SessionAge))"
+        Write-LogMessage -type DEBUG -suppressOutputToFile -message "PowerCLI session exists for `"$ServerName`" (age: $($result.SessionAge))"
 
-        # If skip connectivity test, return now (session exists)
-        if ($skipConnectivityTest) {
+        # If SkipConnectivityTest, return now (session exists)
+        if ($SkipConnectivityTest) {
             $result.IsConnected = $true
             return $result
         }
@@ -931,25 +931,25 @@ Function Test-VcenterConnection {
         # - Always available (every vCenter has at least one datacenter)
         # - Read-only (no side effects)
         # - Validates authentication and API access
-        Write-LogMessage -type DEBUG -suppressOutputToFile -message "Performing connectivity test to `"$serverName`"..."
+        Write-LogMessage -type DEBUG -suppressOutputToFile -message "Performing connectivity test to `"$ServerName`"..."
 
-        $null = Get-Datacenter -Server $serverName -ErrorAction Stop | Select-Object -First 1
+        $null = Get-Datacenter -Server $ServerName -ErrorAction Stop | Select-Object -First 1
 
         # Connection is valid
         $result.IsConnected = $true
-        Write-LogMessage -type DEBUG -suppressOutputToFile -message "Connection to `"$serverName`" is active and valid"
+        Write-LogMessage -type DEBUG -suppressOutputToFile -message "Connection to `"$ServerName`" is active and valid"
         return $result
 
     } catch [VMware.VimAutomation.ViCore.Types.V1.ErrorHandling.InvalidLogin] {
-        $result.ErrorMessage = "Authentication failed for vCenter `"$serverName`". Session may have expired."
+        $result.ErrorMessage = "Authentication failed for vCenter `"$ServerName`". Session may have expired."
         Write-LogMessage -type WARNING -message $result.ErrorMessage
         return $result
     } catch [VMware.VimAutomation.Sdk.Types.V1.ErrorHandling.VimException.ViServerConnectionException] {
-        $result.ErrorMessage = "Connection to vCenter `"$serverName`" was lost. Network issue or vCenter restart."
+        $result.ErrorMessage = "Connection to vCenter `"$ServerName`" was lost. Network issue or vCenter restart."
         Write-LogMessage -type WARNING -message $result.ErrorMessage
         return $result
     } catch {
-        $result.ErrorMessage = "Unable to verify connection to vCenter `"$serverName`": $_"
+        $result.ErrorMessage = "Unable to verify connection to vCenter `"$ServerName`": $_"
         Write-LogMessage -type WARNING -message $result.ErrorMessage
         return $result
     }
@@ -984,26 +984,26 @@ Function Disconnect-Vcenter {
         scenarios, or when switching between different server connections to ensure
         proper cleanup of VMware PowerCLI connections.
 
-        .PARAMETER allServers
+        .PARAMETER AllServers
         Optional switch parameter that disconnects from all active vCenter and ESX host connections.
         When specified, the function uses wildcard disconnection (Disconnect-VIServer -Server *)
         to terminate all active PowerCLI sessions. This is useful for cleanup scenarios where
         all connections should be terminated regardless of which servers are connected.
         Cannot be used together with ServerName parameter.
 
-        .PARAMETER serverName
+        .PARAMETER ServerName
         Optional. The fully qualified domain name (FQDN) or IP address of a specific server to disconnect from.
         This can be either a vCenter or an ESX host, depending on the ServerType parameter.
         This should match the server name used in the original connection.
         Required when AllServers is not specified.
 
-        .PARAMETER serverType
+        .PARAMETER ServerType
         Optional. Specifies the type of server being disconnected from. Valid values are "vCenter" or "ESX".
         This parameter is used for logging context but is not strictly required for disconnection.
         - "vCenter": Indicates disconnection from a vCenter instance
         - "ESX": Indicates disconnection from an ESX host instance
 
-        .PARAMETER silence
+        .PARAMETER Silence
         Optional switch parameter that suppresses console output for disconnection success messages.
         When specified, successful disconnections are logged with SuppressOutputToScreen flag,
         preventing console output while maintaining log file entries. Error messages are still
@@ -1011,24 +1011,24 @@ Function Disconnect-Vcenter {
         verbose console output should be minimized while preserving audit trail functionality.
 
         .EXAMPLE
-        Disconnect-Vcenter -allServers
+        Disconnect-Vcenter -AllServers
 
         Disconnects from all active vCenter and ESX host connections with verification.
         This is the recommended approach for script cleanup and error handling.
 
         .EXAMPLE
-        Disconnect-Vcenter -allServers -silence
+        Disconnect-Vcenter -AllServers -Silence
 
         Quietly disconnects from all active connections with suppressed console output.
         Useful for automated cleanup scenarios.
 
         .EXAMPLE
-        Disconnect-Vcenter -serverName "vcenter.example.com" -serverType "vCenter"
+        Disconnect-Vcenter -ServerName "vcenter.example.com" -ServerType "vCenter"
 
         Disconnects from a specific vCenter with error handling and logging.
 
         .EXAMPLE
-        Disconnect-Vcenter -serverName $esxHost -serverType "ESX" -silence
+        Disconnect-Vcenter -ServerName $esxHost -ServerType "ESX" -Silence
 
         Disconnects from a specific ESX host with suppressed console output for success messages.
 
@@ -1047,25 +1047,25 @@ Function Disconnect-Vcenter {
     #>
 
     Param(
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$allServers,
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [String]$serverName,
-        [Parameter(Mandatory = $false)] [ValidateSet("vCenter", "ESX")] [String]$serverType,
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$silence
+        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$AllServers,
+        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [String]$ServerName,
+        [Parameter(Mandatory = $false)] [ValidateSet("vCenter", "ESX")] [String]$ServerType,
+        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [Switch]$Silence
     )
     Write-LogMessage -type DEBUG -message "Entered Disconnect-Vcenter function..."
 
     # Disconnect from vCenter.  Stop on error.
     try {
-        if ($allServers) {
+        if ($AllServers) {
             Disconnect-VIServer -Server * -Force -Confirm:$false -ErrorAction:Stop | Out-Null
         } else {
-            Disconnect-VIServer -Server $serverName -Force -Confirm:$false -ErrorAction:Stop | Out-Null
+            Disconnect-VIServer -Server $ServerName -Force -Confirm:$false -ErrorAction:Stop | Out-Null
         }
     } catch {
     }
     # Double check that all servers are disconnected.
     if ($null -eq $Global:DefaultVIServer) {
-        if ($silence) {
+        if ($Silence) {
             Write-LogMessage -type DEBUG -message "Successfully disconnected from all vCenter and ESX hosts"
         } else {
             Write-LogMessage -type INFO -message "Successfully disconnected from all vCenter and ESX hosts"
@@ -1104,13 +1104,13 @@ Function Test-VCenterVersion {
         - Logs version information for audit trail
         - Returns standardized result object for error handling
 
-        .PARAMETER minimumVersion
+        .PARAMETER MinimumVersion
         The minimum required version in "major.minor.patch" format (e.g., "9.0.0", "8.0.3").
         This parameter is mandatory and determines the version threshold for validation.
         The version string must contain at least three dot-separated numeric components.
 
         .EXAMPLE
-        $result = Test-VCenterVersion -minimumVersion "9.0.0"
+        $result = Test-VCenterVersion -MinimumVersion "9.0.0"
         if (-not $result.Success) {
             Write-Host "Version validation failed: $($result.ErrorMessage)"
             exit 1
@@ -1119,7 +1119,7 @@ Function Test-VCenterVersion {
         Validates the vCenter version against a minimum requirement of 9.0.0.
 
         .EXAMPLE
-        Test-VCenterVersion -minimumVersion "8.0.3"
+        Test-VCenterVersion -MinimumVersion "8.0.3"
 
         Validates the vCenter version with a minimum requirement of 8.0.3.
 
@@ -1151,7 +1151,7 @@ Function Test-VCenterVersion {
     #>
 
     Param(
-        [Parameter(Mandatory = $true)] [ValidateNotNullOrEmpty()] [String]$minimumVersion
+        [Parameter(Mandatory = $true)] [ValidateNotNullOrEmpty()] [String]$MinimumVersion
     )
 
     Write-LogMessage -type DEBUG -message "Entered Test-VCenterVersion function..."
@@ -1161,14 +1161,14 @@ Function Test-VCenterVersion {
         $vcServer = $Global:DefaultViServers | Where-Object { $_.Name -eq $Script:vCenterName -and $_.IsConnected }
 
         if (-not $vcServer) {
-            return Write-ErrorAndReturn -errorMessage "Not connected to vCenter `"$Script:vCenterName`". Please establish a connection first." -errorCode "ERR_NOT_CONNECTED"
+            return Write-ErrorAndReturn -ErrorMessage "Not connected to vCenter `"$Script:vCenterName`". Please establish a connection first." -ErrorCode "ERR_NOT_CONNECTED"
         }
 
         # Get the vCenter version from the API version property
         $vcVersionString = $vcServer.Version
 
         if (-not $vcVersionString) {
-            return Write-ErrorAndReturn -errorMessage "Unable to retrieve version information from vCenter `"$Script:vCenterName`"." -errorCode "ERR_VERSION_UNAVAILABLE"
+            return Write-ErrorAndReturn -ErrorMessage "Unable to retrieve version information from vCenter `"$Script:vCenterName`"." -ErrorCode "ERR_VERSION_UNAVAILABLE"
         }
 
         Write-LogMessage -type DEBUG -message "Detected vCenter `"$Script:vCenterName`" version: $vcVersionString"
@@ -1176,28 +1176,28 @@ Function Test-VCenterVersion {
         # Convert version strings to [version] type for proper semantic version comparison
         try {
             $vcVersion = [version]$vcVersionString
-            $minVersion = [version]$minimumVersion
+            $minVersion = [version]$MinimumVersion
         } catch {
-            return Write-ErrorAndReturn -errorMessage "Failed to parse version strings. vCenter version: `"$vcVersionString`", Minimum version: `"$minimumVersion`". Both must be in valid version format (e.g., 9.0.0)." -errorCode "ERR_VERSION_PARSE_FAILED"
+            return Write-ErrorAndReturn -ErrorMessage "Failed to parse version strings. vCenter version: `"$vcVersionString`", Minimum version: `"$MinimumVersion`". Both must be in valid version format (e.g., 9.0.0)." -ErrorCode "ERR_VERSION_PARSE_FAILED"
         }
 
         # Compare versions using [version] type comparison (automatically handles major.minor.build.revision)
         if ($vcVersion -lt $minVersion) {
-            return Write-ErrorAndReturn -errorMessage "vCenter `"$Script:vCenterName`" version $vcVersionString does not meet minimum required version: $minimumVersion. Please upgrade vCenter." -errorCode "ERR_VERSION_TOO_OLD"
+            return Write-ErrorAndReturn -ErrorMessage "vCenter `"$Script:vCenterName`" version $vcVersionString does not meet minimum required version: $MinimumVersion. Please upgrade vCenter." -ErrorCode "ERR_VERSION_TOO_OLD"
         }
 
         # Version validation passed
-        Write-LogMessage -type INFO -message "vCenter `"$Script:vCenterName`" version $vcVersionString meets minimum required version: $minimumVersion."
+        Write-LogMessage -type INFO -message "vCenter `"$Script:vCenterName`" version $vcVersionString meets minimum required version: $MinimumVersion."
 
         return @{
             Success = $true
             ErrorMessage = $null
             ErrorCode = $null
             Version = $vcVersionString
-            MinimumVersion = $minimumVersion
+            MinimumVersion = $MinimumVersion
         }
 
     } catch {
-        return Write-ErrorAndReturn -errorMessage "Failed to validate vCenter version for `"$Script:vCenterName`": $_" -errorCode "ERR_VALIDATION_EXCEPTION"
+        return Write-ErrorAndReturn -ErrorMessage "Failed to validate vCenter version for `"$Script:vCenterName`": $_" -ErrorCode "ERR_VALIDATION_EXCEPTION"
     }
 }
